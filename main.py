@@ -4,7 +4,12 @@ import discord
 from discord import Intents
 
 banned_list = []
+punishments = {
+    'strikes': 'timeout',
+    'strikes_max': 'ban'
+}
 strikes_list = {}
+max_strikes = 3
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -28,15 +33,21 @@ async def on_message(message):
     if message.content == '!words list':
         await message.channel.send(banned_list)
 
+    if '!words set strikes' in message.content:
+        max_strikes = (int)(message.content[17:])
+
+    if '!actions' in message.content:
+        pass
+
     if message.content in banned_list:
         if message.author.name not in strikes_list:
             strikes_list[message.author.name] = 0
         strikes_list[message.author.name] += 1
         await message.channel.send(f'{message.author.name} has been given a strike')
-        if strikes_list[message.author.name] < 3:
+        if strikes_list[message.author.name] < max_strikes:
             pass
-        elif strikes_list[message.author.name] == 3:
-            ban(message.author)
+        elif strikes_list[message.author.name] == max_strikes:
+            pass
         await message.delete()
 
 async def ban(member : discord.Member):
