@@ -1,15 +1,13 @@
-from dotenv import load_dotenv
 import os
 import discord
 from discord import Intents
+from dotenv import load_dotenv
+from time import time
 
 banned_list = []
-punishments = {
-    'strikes': 'timeout',
-    'strikes_max': 'ban'
-}
 strikes_list = {}
 max_strikes = 3
+timeout = 1
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -20,7 +18,7 @@ async def on_ready():
     print(f'{client.user} has connected to Discord')
 
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     if message.author == client.user:
         return
 
@@ -37,7 +35,10 @@ async def on_message(message):
         max_strikes = (int)(message.content[17:])
 
     if '!actions' in message.content:
-        pass
+        if 'edit strikes' in message.content[8:]:
+            pass
+        if 'edit max strikes' in message.content[8:]:
+            pass
 
     if message.content in banned_list:
         if message.author.name not in strikes_list:
@@ -45,12 +46,26 @@ async def on_message(message):
         strikes_list[message.author.name] += 1
         await message.channel.send(f'{message.author.name} has been given a strike')
         if strikes_list[message.author.name] < max_strikes:
-            pass
+            action = punishments['strikes']
+            handle(action, message.author)
         elif strikes_list[message.author.name] == max_strikes:
-            pass
+            action = punishments['strikes_max']
+            handle(action, message.author)
         await message.delete()
 
-async def ban(member : discord.Member):
+async def handle(action, member: discord.Member):
+    action(member)
+
+async def ban(member: discord.Member):
     await member.ban()
+
+async def timeout(member: discord.Member):
+    currTime = round(time() * 1000)
+    await member.timeout(currTime + (timeout * 3600000))
+
+punishments = {
+    'strikes': timeout,
+    'strikes_max': ban
+}
 
 client.run(TOKEN)
